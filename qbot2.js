@@ -569,16 +569,14 @@ function enableCronJobs(){
 		logActivity();
 		logTwitchActivity();
 	});
-	cron.schedule("0 15 23 * * 1", function(){
+	cron.schedule("0 21 0 * * 2", function(){
 		console.log(ReturnDate()+" [INFO] Run schedule - paste activity image");
 		pasteActivityImageToChannel(config.activity_image_channel);
 	});
-	/*
 	cron.schedule("0 38 20 * * *", function(){
 		console.log(ReturnDate()+" [INFO] Run schedule - log Discord member count");
 		saveMemberCount();
 	});
-	*/
 }
 ///////////////////////////////////////////
 //////////////////////////  LOGIN 

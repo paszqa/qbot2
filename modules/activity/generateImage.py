@@ -203,7 +203,7 @@ for line in mostPlayedGames:
     gameTime = line.split(";")[1]
     gameTimeHours = str(round((float(gameTime) / 60),1))+"h"
     gameCoverUrl = line.split(";")[2]
-    gameTitlePrepared = re.sub('[^A-Za-z0-9]+', '', gameTitle)
+    gameTitlePrepared = re.sub('[^A-Za-z0-9\-]+', '', gameTitle)
     #print(gameTitlePrepared)
     firstOffset = len(gameTimeHours) * lastWeekTextOffsetPerLetter # Offset according to length of hours text
     #secondOffset = len(gameTimeHours) * lastWeekTextOffsetPerLetter # Offset according to length of hours text
@@ -352,7 +352,7 @@ for line in discordActivity:
             break
         rowSplit = row.split(";")
         gameTitle = rowSplit[0]
-        gameTitlePrepared = re.sub('[^A-Za-z0-9]+', '', gameTitle)
+        gameTitlePrepared = re.sub('[^A-Za-z0-9\-]+', '', gameTitle)
         if len(rowSplit) > 1:
             gameCoverUrl = rowSplit[1]
         coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
@@ -397,12 +397,25 @@ for line in streamActivity:
     streamerTime =  line.split(";")[1]
     streamerTimeHours = str(round((float(streamerTime) / 60),1))+"h"
     streamerImageUrl =  line.split(";")[2]
-    #Download player image
-    r = requests.get(streamerImageUrl)  #Download streamer profile image
-    streamerImagePath = config["script_path"]+config["activity_path"]+"temp/streamerImage.jpg" 
-    with open(streamerImagePath, 'wb') as f:
-        f.write(r.content)
-    f.close()
+    #Check if streamer image is correct format
+    streamerImageExists = False
+    image_formats = ("image/png", "image/jpeg", "image/jpg")
+    if "None" not in streamerImageUrl:
+        r = requests.head(streamerImageUrl)
+        #print(r.headers["content-type"])
+        if r.headers["content-type"] in image_formats:
+            #Download player image
+            r = requests.get(streamerImageUrl)  #Download streamer profile image
+            streamerImagePath = config["script_path"]+config["activity_path"]+"temp/streamerImage.jpg" 
+            with open(streamerImagePath, 'wb') as f:
+                f.write(r.content)
+            f.close()
+            streamerImageExists = True
+            
+    if streamerImageExists:
+        streamerImagePath = config["script_path"]+config["activity_path"]+"temp/streamerImage.jpg"
+    else:
+        streamerImagePath = config["script_path"]+config["activity_path"]+"resources/noavatar.png"
     #Calc corners
     lrCornerImage = (twitchPlayerImageLrCorner[0] + index * (twitchPlayerImagePadding[0]), twitchPlayerImageLrCorner[1] + index * (twitchPlayerImagePadding[1]))
     lrCornerName = (twitchPlayerNameLrCorner[0] + index * (twitchPlayerImagePadding[0]), twitchPlayerNameLrCorner[1] + index * (twitchPlayerImagePadding[1]))
@@ -517,7 +530,7 @@ for line in sortedCsv:
         if gameIndex == 3:
             break
         gameTitle = row.split(";")[1]
-        gameTitlePrepared = re.sub('[^A-Za-z0-9]+', '', gameTitle)
+        gameTitlePrepared = re.sub('[^A-Za-z0-9\-]+', '', gameTitle)
         gameCoverUrl = row.split(";")[3]
         coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
         command = "python3 "+config["script_path"]+config["activity_path"]+"downloadCoverForName.py \""+gameTitle+"\""

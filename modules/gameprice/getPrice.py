@@ -60,7 +60,7 @@ def checkGamePass(inputLines):
     if len(inputLines) > 0:
         gamePass = 0
         for line in inputLines:
-            if "Included with Xbox Game Pass for PC" in str(line):
+            if "PC Game Pass" in str(line):
                 gamePass = 1
         if gamePass == 1:
             return "GamePassPC;yes"
@@ -71,7 +71,10 @@ def checkGamePass(inputLines):
 
 def checkGeforceNow(gameName):
     gameName = str(gameName).lower().replace(":","").replace("-"," ").replace("'","")
-    inputLines=str(subprocess.check_output("curl -s https://static.nvidiagrid.net/supported-public-game-list/locales/gfnpc-en-US.json|jq '.[] .title'|tr -d '\"' ", shell=True)).split("\\n")
+    #Old source - incomplete, doesn't include EA games
+    #inputLines=str(subprocess.check_output("curl -s https://static.nvidiagrid.net/supported-public-game-list/locales/gfnpc-en-US.json|jq '.[] .title'|tr -d '\"' ", shell=True)).split("\\n")
+    inputLines=str(subprocess.check_output("curl -s https://www.nvidia.com//content/dam/en-zz/Solutions/geforce/GeForce-experience/games/gamesdata.js| grep \"title:\"| awk -F'title: \"' '{print substr($2, 1, length($2)-3) }'", shell=True)).split("\\n")
+    
     bestMatch = ""
     bestRatio = 0
     for line in inputLines:
@@ -80,6 +83,15 @@ def checkGeforceNow(gameName):
         if s1.ratio() > bestRatio:
             bestMatch = line
             bestRatio = s1.ratio()
+    #print(str(bestRatio)+" ==> "+str(bestMatch))
+    inputLines=str(subprocess.check_output("curl -s https://static.nvidiagrid.net/supported-public-game-list/locales/gfnpc-en-US.json|jq '.[] .title'|tr -d '\"' ", shell=True)).split("\\n")
+    for line in inputLines:
+        line = line.replace("\\xc2","").replace("\\x84","").replace("\\xa2","").replace("\\xe2","").replace("\\xae","").replace("\\x80","").replace("\\x99","").replace("'","").lower()
+        s1 = SequenceMatcher(None, gameName, line)
+        if s1.ratio() > bestRatio:
+            bestMatch = line
+            bestRatio = s1.ratio()
+    #print(str(bestRatio)+" ==> "+str(bestMatch))
     if bestRatio > 0.93:
         return "yes"
     else:

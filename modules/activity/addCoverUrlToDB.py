@@ -50,7 +50,7 @@ mycursor = mydb.cursor()
 
 #Return coverurl
 def getCoverUrl(name, year=0):
-    print("Trying to ADD cover URL to DB for game name: "+name+" from year: "+str(year))
+    #print("Trying to ADD cover URL to DB for game name: "+name+" from year: "+str(year))
     #Check for game's cover from IGDB
     if year != 0:
         yearFilter = " & release_dates.y = '"+year+"'"
@@ -61,33 +61,33 @@ def getCoverUrl(name, year=0):
     # NEW COMMAND, USING FILTER / WHERE
     #Try to find Game ID using full game name:
     command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields id; where name ~ \""+name.replace("\"","").replace(";","").replace("'","")+"\" | alternative_names.name ~ \""+name.replace("\"","").replace(";","").replace("'","")+"\""+yearFilter+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-    print("First command of getCoverUrl:")
-    print(command)
+    #print("First command of getCoverUrl:")
+    #print(command)
     gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     #If first method failed - try to find Game ID using first word in the name and then grepping the rest:
     if gameid == "" or gameid == " " or gameid == "NULL" or gameid == "null":
         firstWordInName = name.split(" ")[0].split(":")[0]
         preparedGrepName = name.replace("\"","").replace(";","").replace("'","").replace(" ",".*")
         command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields name; where name ~ \""+firstWordInName+"\"*; limit 50;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] |grep -B1 -Ei '"+preparedGrepName+"'|head -1"
-        print("Second command of getCoverUrl:")
-        print(command)
+        #print("Second command of getCoverUrl:")
+        #print(command)
         gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     #Another method to get gameid, if the last one failed
     if gameid=="" or gameid == " " or gameid == "NULL" or gameid == "null":#If not found game id, search without where-category filter
         command = "curl -s 'https://api.igdb.com/v4/games/' -d 'search \""+name.replace("\"","").replace(";","").replace("'","")+"\"; fields id; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-        print("Third command of getCoverUrl:")
-        print(command)
+        #print("Third command of getCoverUrl:")
+        #print(command)
         gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     command = "curl -s 'https://api.igdb.com/v4/covers/' -d 'fields url; where game = "+str(gameid)+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] "    
     #print("---")
     #print("Second command of getCoverUrl:")
-    print(command)
+    #print(command)
     coverurl=str(subprocess.check_output(command, shell=True).decode( "utf-8" ).strip())
     if len(coverurl) > 3:
         coverurl = coverurl.split("\n")[1].replace("t_thumb","t_cover_small").replace("//","https://").replace("\"","")
     if "https" not in coverurl:
         coverurl = ""
-    print("Result of getCoverUrl 1 -> "+coverurl)
+    #print("Result of getCoverUrl 1 -> "+coverurl)
     #Now add this result to DATABASE
     numberOfResults = 0
     #Check if there is a DB entry with already existing coverurl
