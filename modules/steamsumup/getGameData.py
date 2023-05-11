@@ -112,14 +112,22 @@ if mode == "getname":
             r = requests.get(url, allow_redirects=True)
             time.sleep(4 * x)
         #Clean up the name
+        #print("\n\t[getGameData.py] [INFO] Dirty name: "+str(gameName))
         gameName = str(gameName)
-        gameName = str(gameName[2:]).replace("\"","")
+        if gameName[0] == "b" and gameName[1] == "'":
+            gameName = str(gameName[2:]).replace("\"","")
+        #print("\n\t[getGameData.py] [INFO] WIP-1 name: "+str(gameName))
         gameName = gameName.replace("\\'","'") #fix apostrophe
+        #print("\n\t[getGameData.py] [INFO] WIP-2 name: "+str(gameName))
         gameName = gameName.replace("\\xe2\\x84\\xa2","®")
+        #print("\n\t[getGameData.py] [INFO] WIP-3 name: "+str(gameName))
         gameName = gameName.replace("\\xe2\\x80\\x99","'")
+        #print("\n\t[getGameData.py] [INFO] WIP-4 name: "+str(gameName))
         gameName = gameName.replace("\\xc2","").replace("\\xae","").replace("\\xe2","")
+        #print("\n\t[getGameData.py] [INFO] WIP-5 name: "+str(gameName))
         gameName = gameName.replace("\\n\'","")
         gameName = re.sub('[^A-Za-z0-9\- ]+', '', gameName)
+        #print("\n\t[getGameData.py] [INFO] Clean name: "+str(gameName))
         
         #print("-----> "+gameName)
         #Show output
@@ -160,19 +168,19 @@ if mode == "addcover":
         for row in mycursor.fetchall():
             numberOfResults += 1
         if numberOfResults > 0:
-            print("there is already a DB entry with empty coverurl for "+thingToCheck)
-            print("Trying to download a cover again")
+            #print("there is already a DB entry with empty coverurl for "+thingToCheck)
+            #print("Trying to download a cover again")
             command='python3 '+config["script_path"]+config["activity_path"]+'downloadCoverForName.py "'+str(thingToCheck)+'"'
-            print("Getgamedata: CMD:"+command)
+            #print("Getgamedata: CMD:"+command)
             coverUrl = subprocess.check_output(command, shell=True)
             coverUrl = str(coverUrl).replace("'b","").replace("\n'","").replace("\n","")
-            print("hmm:"+coverurl)
+            #print("hmm:"+coverurl)
         else:
             if coverurl != "" and coverurl != " " and coverurl != "NULL" and coverurl != "null":
-                print("Adding cover entry for "+thingToCheck+" CoverURL: "+coverurl)
+                #print("Adding cover entry for "+thingToCheck+" CoverURL: "+coverurl)
                 mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+thingToCheck+"', '"+str(coverurl)+"')")
             else:
-                print("Can't add cover entry for "+thingToCheck+" CoverURL: "+coverurl+" - adding null")
+                #print("Can't add cover entry for "+thingToCheck+" CoverURL: "+coverurl+" - adding null")
                 mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+thingToCheck+"', NULL)")
         mycursor.execute("COMMIT;")
         print(coverurl)

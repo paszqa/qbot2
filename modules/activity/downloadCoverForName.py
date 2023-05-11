@@ -75,14 +75,14 @@ def getCoverFromName(name):
     else:#If cover was not found in DB
         #print("Cover URL for Game Name: "+name+" was NOT FOUND in the DATABASE. Trying to add cover URL to DB using command below:")
         command = "python3 "+config["script_path"]+config["activity_path"]+"addCoverUrlToDB.py nameyear \""+name+"\""
-        #print("Download CMD:    "+command)
+        #print("[downloadCoverForName.py] [INFO] Add cover CMD: "+command)
         os.system(command)
         mydb.reconnect(attempts=1, delay=1)
         mycursor.execute("SELECT coverurl FROM `steamgames` WHERE `name`='"+name+"' LIMIT 1;")
         coverresult = mycursor.fetchall()
         if len(coverresult) > 0:
             coverUrl = str(coverresult[0][0]).replace("'b","").replace("\n'","").replace("\n","")
-            #print("AAAAAAAAA:"+coverUrl)
+            #print("[downloadCoverForName.py] [INFO] Cover URL: "+coverUrl)
             downloadCoverFromUrl(name, coverUrl)
             return coverUrl
         return ""
@@ -92,7 +92,7 @@ def getCoverFromName(name):
 
 if len(sys.argv) > 0:
     #print("1")
-    gameName = re.sub('[^A-Za-z0-9\-\(\) ]+', '', sys.argv[1])
+    gameName = re.sub('[^A-Za-z0-9\.\-\(\) ]+', '', sys.argv[1])
     getCoverFromName(gameName)
 else:
     print("Missing arguments")

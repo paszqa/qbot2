@@ -21,6 +21,7 @@ import requests#For getting covers from IGDB
 import mysql.connector
 from os.path import exists
 import json #JSON read/write capability
+from difflib import SequenceMatcher
 
 #Read JSON config
 if exists("../../config.json"):
@@ -61,22 +62,31 @@ def getCoverUrl(name, year=0):
     # NEW COMMAND, USING FILTER / WHERE
     #Try to find Game ID using full game name:
     command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields id; where name ~ \""+name.replace("\"","").replace(";","").replace("'","")+"\" | alternative_names.name ~ \""+name.replace("\"","").replace(";","").replace("'","")+"\""+yearFilter+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-    #print("First command of getCoverUrl:")
-    #print(command)
+    #print("\tFirst command of getCoverUrl:")
+    #print("\t"+command)
     gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
-    #If first method failed - try to find Game ID using first word in the name and then grepping the rest:
+    #If first method failed - try to get best name from IGDB and compare to the target
+    if gameid == "" or gameid == " " or gameid == "NULL" or gameid == "null":
+        #print("\t[addCoverUrlToDB.py] [INFO] Compare game name to IGDB: "+str(name))
+        bestName = getIgdbName(str(name))
+        if bestName != "":
+            command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields id; where name ~ \""+bestName.replace("\"","").replace(";","").replace("'","")+"\" | alternative_names.name ~ \""+bestName.replace("\"","").replace(";","").replace("'","")+"\""+yearFilter+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
+            #print("\tSecond command of getCoverUrl:")
+            #print("\t"+command)
+            gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
+    #If second method failed - try to find Game ID using first word in the name and then grepping the rest:
     if gameid == "" or gameid == " " or gameid == "NULL" or gameid == "null":
         firstWordInName = name.split(" ")[0].split(":")[0]
         preparedGrepName = name.replace("\"","").replace(";","").replace("'","").replace(" ",".*")
         command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields name; where name ~ \""+firstWordInName+"\"*; limit 50;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] |grep -B1 -Ei '"+preparedGrepName+"'|head -1"
-        #print("Second command of getCoverUrl:")
-        #print(command)
+        #print("\tThird command of getCoverUrl:")
+        #print("\t"+command)
         gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     #Another method to get gameid, if the last one failed
     if gameid=="" or gameid == " " or gameid == "NULL" or gameid == "null":#If not found game id, search without where-category filter
         command = "curl -s 'https://api.igdb.com/v4/games/' -d 'search \""+name.replace("\"","").replace(";","").replace("'","")+"\"; fields id; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-        #print("Third command of getCoverUrl:")
-        #print(command)
+        #print("\tFourth command of getCoverUrl:")
+        #print("\t"+command)
         gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     command = "curl -s 'https://api.igdb.com/v4/covers/' -d 'fields url; where game = "+str(gameid)+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] "    
     #print("---")
@@ -120,9 +130,34 @@ def getCoverUrl(name, year=0):
                 #print("Can't add cover entry for "+name+" CoverURL: "+coverurl+" - adding null")
                 mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+name+"', NULL)")
         mycursor.execute("COMMIT;")
-        #print(coverurl)
+        #print("[addCoverUrlToDB] [INFO] Cover URL retrieved: "+coverurl)
     return coverurl
 
+#Get best match for game's name
+def getIgdbName(nameToCheck):
+    firstWordInName = nameToCheck.split(" ")[0].split(":")[0]
+    preparedGrepName = nameToCheck.replace("\"","").replace(";","").replace("'","").replace(" ",".*")
+    command = "curl -s 'https://api.igdb.com/v4/games/' -d 'fields name; where name ~ \""+firstWordInName+"\"*; limit 150;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[].name | xargs -L 1 > "+pathToScript+"/temp/bestname"
+    #print("\t[addCoverUrlToDB.py] [INFO] IGDB Name command:")
+    #print("\t"+command)
+    runIt = subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
+    list = open(pathToScript+"/temp/bestname")
+    currentBestScore = 0
+    currentBestName = ""
+    for row in list:
+        row = str(row)
+        s1 = SequenceMatcher(None, row, nameToCheck)
+        if s1.ratio() > currentBestScore:
+            currentBestScore = s1.ratio()
+            currentBestName = row
+        #Debug:
+        #print (">>>>>>>>>>>>>>>>>>>>>"+nameToCheck+"<<<<<<<<<<<<<<<<<<<<<")
+        #print(row.replace("\n","")+" === "+str(s1.ratio())+" ---> BEST IS "+str(currentBestName).replace("\n","")+" = "+str(currentBestScore), end='\n')
+    #print("\t[addCoverUrlToDB.py] [INFO] Chosen best name: "+str(currentBestName)+" RATIO:"+str(currentBestScore)[:4])
+    if currentBestScore > 0.7:
+        return str(currentBestName.replace("\n",""))
+    else:
+        return ""
 
 ##Script magic itself       
 
@@ -132,19 +167,19 @@ if len(sys.argv) > 1:
     #print("1"+scriptMode)
     if scriptMode == "name":
         #print("2")
-        gameName = re.sub('[^A-Za-z0-9\- ]+', '', sys.argv[2])
-        getCoverUrl(gameName)
+        gameName = re.sub('[^A-Za-z0-9\.\- ]+', '', sys.argv[2])
+        print(getCoverUrl(gameName))
     if scriptMode == "nameyear":
-        gameName = re.sub('[^A-Za-z0-9\-\( ]+', '', sys.argv[2])
+        gameName = re.sub('[^A-Za-z0-9\.\-\( ]+', '', sys.argv[2])
         gameNameSplit = gameName.split(" (")
         if len(gameNameSplit) > 1:
             gameYear = gameName.split(" (")[1]
             gameName = gameName.split(" (")[0]
             getCoverUrl(gameName,gameYear)
         else:
-            gameName = re.sub('[^A-Za-z0-9\- ]+', '', sys.argv[2])
+            gameName = re.sub('[^A-Za-z0-9\.\- ]+', '', sys.argv[2])
             getCoverUrl(gameName)
 else:
-    print("Missing arguments")
+    print("\t[addCoverUrlToDB.py] [ERROR] Missing arguments")
     exit
     

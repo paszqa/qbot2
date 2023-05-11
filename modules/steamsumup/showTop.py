@@ -29,14 +29,14 @@ mydb = mysql.connector.connect(
 mycursor = mydb.cursor()
 mycursor.execute("SELECT * FROM `totalTimes` ORDER BY `totalTime` DESC LIMIT 25")
 #print("Final total time")
-f = open('output/most-played-total.csv','w+')
+f = open(pathToScript+'/output/most-played-total.csv','w+')
 print("No ; Game ; Hours ; Slavs")
 f.write("No;Game;Hours;Slavs\n")
 no=1
 for finalRow in mycursor.fetchall():
-    #print("Working on: "+str(finalRow[1]))
+    print("\t[showTop.py] [INFO] Working on: "+str(finalRow[1]))
     gameName=subprocess.check_output('python3 '+config["script_path"]+config["steam_sum_up_path"]+'/getGameData.py getname '+str(finalRow[1]), shell=True)
-    #print(gameName)
+    print("\t[showTop.py] [INFO] GameName after getting: "+str(gameName))
     gameName = str(gameName).replace("\\n\'","")
     gameName = gameName[2:].replace("\"","")
     gameName = gameName.replace("\\'","'") #fix apostrophe

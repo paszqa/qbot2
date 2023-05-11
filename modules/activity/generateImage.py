@@ -118,7 +118,7 @@ steamCoverPadding = (37,0)
 totalTimesLrCorner = (218,680)
 totalTimesCoverSize = (80,112)
 totalTimesCoverWidth = (80,0)
-totalTimesCoverPadding = (15,0)
+totalTimesCoverPadding = (13,0)
 totalTimesCenterFirstText = (257, 793)
 totalTimesTextSize = 19 
 totalTimesTextOffsetPerLetter = totalTimesTextSize / 3.7
@@ -131,7 +131,7 @@ totalTimesSmallTextOffsetPerLetter = totalTimesSmallTextSize / 3.7
 rankingLrCorner = (218,851)
 rankingCoverSize = (80,112)
 rankingCoverWidth = (80,0)
-rankingCoverPadding = (15,0)
+rankingCoverPadding = (13,0)
 rankingStarsLrCorner = (217,960)
 rankingCenterFirstText = (258, 972)
 rankingCenterSecondText = (279, 988)
@@ -146,7 +146,7 @@ rankingSmallTextOffsetPerLetter = rankingSmallTextSize / 3.7
 worstLrCorner = (218,1024)
 worstCoverSize = (80,112)
 worstCoverWidth = (80,0)
-worstCoverPadding = (15,0)
+worstCoverPadding = (13,0)
 worstStarsLrCorner = (217,1133)
 worstCenterFirstText = (258, 1145)
 worstTextSize = 20
@@ -275,6 +275,7 @@ def resizeNameText(img, factor=3):
     width, height = img.size
     img = img.resize((math.floor(round(width/factor)), math.floor(round(height/factor))), resample=1)
     return img
+    
 ####################################
 # GetDiscord activity title
 ####################################
@@ -298,7 +299,7 @@ for line in discordActivity:
     playerImageUrl = line.split(";")[2]
     playerId = line.split(";")[3].strip()
     #if player Image is not null:
-    if playerImageUrl != "null":
+    if playerImageUrl != "null" and playerImageUrl != "":
         #Download player image
         r = requests.get(playerImageUrl)  #Download player image from url
         playerImagePath = config["script_path"]+config["activity_path"]+"temp/playerImage.jpg" 
@@ -471,7 +472,10 @@ steamActivity = open(config["script_path"]+config["activity_path"]+'output/recen
 #print(sortedCsv)
 steamCsv = csv.reader(open(config["script_path"]+config["activity_path"]+'output/recent-steam.csv'), delimiter=";")
 sortedCsv = sorted(steamCsv, key=lambda x: int(x[2]), reverse=True)
+print("---STEAM activity---")
+print("Sorted CSV: ")
 print(sortedCsv)
+print("\n")
 
 index = 0
 for line in sortedCsv:
@@ -486,6 +490,7 @@ for line in sortedCsv:
     playerTimeHours = str(round((float(playerTime) / 60),1))+"h"
     playerImageUrl = line[3]
     playerId = line[0].strip()
+    print("Steam player data:\n\t"+str(line))
     #Download player image
     r = requests.get(playerImageUrl)  #Download cover from coverurl
     playerImagePath = config["script_path"]+config["activity_path"]+"temp/steamImage.jpg" 
@@ -565,26 +570,28 @@ for line in sortedCsv:
 ####################################
 totalTimes = open(config["script_path"]+config["steam_sum_up_path"]+'output/most-played-total.csv', 'r')
 totalTimes = totalTimes.readlines()[1:]
+print("\n---Total Times---")
 index = 0
 for line in totalTimes:
-    if index > 12:
+    if index > 13:
         break
     gameTitle = line.split(";")[1]
-    print(gameTitle)
+    print(str(gameTitle))
     gameTimeHours = line.split(";")[2].split(".")[0]+"h"
+    print("\tHours: "+str(gameTimeHours))
     gameSlavs = line.split(";")[3].replace("\n","")
     #gameTimeHours = str(round((float(gameTime) / 60),1))+"h"
     #gameCoverUrl = line.split(";")[2]
     gameTitlePrepared = re.sub('[^A-Za-z0-9\-]+', '', gameTitle)
-    #print(gameTitlePrepared)
+    print("\tGame title prepared: "+str(gameTitlePrepared))
     offset = len(gameTimeHours) * totalTimesTextOffsetPerLetter # Offset according to length of hours text
     coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
     stateOfFile = str(exists(coverPath))
-    print("Coverpath:"+coverPath+" ==== "+stateOfFile)
+    print("\tCoverpath:"+coverPath+" ==== "+stateOfFile)
     #Paste game cover image if exists
     if stateOfFile == "False":
         command='python3 '+config["script_path"]+config["activity_path"]+'downloadCoverForName.py "'+str(gameTitle)+'"'
-        print("CMD:"+command)
+        print("\tCMD:"+command)
         subprocess.check_output(command, shell=True)
         coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
         stateOfFile = str(exists(coverPath))
@@ -594,7 +601,7 @@ for line in totalTimes:
     coverImage = coverImage.convert("RGBA")
     coverImage = coverImage.resize(totalTimesCoverSize, resample=1)
     lrCorner = (totalTimesLrCorner[0] + index * (totalTimesCoverWidth[0] + totalTimesCoverPadding[0]), totalTimesLrCorner[1] + index * (totalTimesCoverWidth[1] + totalTimesCoverPadding[1]))
-    print("LR:"+str(lrCorner))
+    print("\tLR:"+str(lrCorner))
     img.paste(coverImage, lrCorner, coverImage)
     textStart = (totalTimesCenterFirstText[0] + index * (totalTimesCoverWidth[0] + totalTimesCoverPadding[0]) - offset, totalTimesCenterFirstText[1] + index * (totalTimesCoverWidth[1] + totalTimesCoverPadding[1]))
     imgDraw.text(textStart, gameTimeHours, font=totalTimesFont, fill=(255,255,255))
@@ -613,10 +620,10 @@ for line in totalTimes:
 
 bestRanks = open('/home/pi/qBot/votes/ranking_sorted.csv', 'r') # TODO: CHANGE PATH WHEN VOTESYSTEM IS READY
 bestRanks = bestRanks.readlines()[1:]
-
+print("\n---Best ranks---")
 index = 0
 for line in bestRanks:
-    if index > 12:
+    if index > 13:
         break
     gameTitle = line.split(";")[0].split(" (")[0]
     print(gameTitle)
@@ -630,11 +637,11 @@ for line in bestRanks:
     offset = len(gameRank) * rankingTextOffsetPerLetter # Offset according to length of hours text
     coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
     stateOfFile = str(exists(coverPath))
-    print("Coverpath:"+coverPath+" ==== "+stateOfFile)
+    print("\tCoverpath:"+coverPath+" ==== "+stateOfFile)
     #Paste game cover image if exists
     if stateOfFile == "False":
         command='python3 '+config["script_path"]+config["activity_path"]+'downloadCoverForName.py "'+str(gameTitle)+'"'
-        print("CMD:"+command)
+        print("\tCMD:"+command)
         subprocess.check_output(command, shell=True)
         coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
         stateOfFile = str(exists(coverPath))
@@ -644,7 +651,7 @@ for line in bestRanks:
     coverImage = coverImage.convert("RGBA")
     coverImage = coverImage.resize(rankingCoverSize, resample=1)
     lrCorner = (rankingLrCorner[0] + index * (rankingCoverWidth[0] + rankingCoverPadding[0]), rankingLrCorner[1] + index * (rankingCoverWidth[1] + rankingCoverPadding[1]))
-    print("LR:"+str(lrCorner))
+    print("\tLR:"+str(lrCorner))
     img.paste(coverImage, lrCorner, coverImage)
     
     blackStar = Image.open(config["script_path"]+config["activity_path"]+'resources/0star.png')

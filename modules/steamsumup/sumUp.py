@@ -74,9 +74,9 @@ for steamid in steamaccounts:
             numberOfResults = len(results)
             #print("......Found "+str(numberOfResults)+" existing results for appId "+str(row[0]))
             if numberOfResults == 0:
-#                gameName=os.system("curl -s https://store.steampowered.com/api/appdetails/?appids="+str(row[0])+" | jq '.[] | .data | .name'");
-#                print(".........Game Name: "+str(gameName))
-#                gameName = str(gameName).replace("\"","")
+                #gameName=os.system("curl -s https://store.steampowered.com/api/appdetails/?appids="+str(row[0])+" | jq '.[] | .data | .name'");
+                #print(".........Game Name: "+str(gameName))
+                #gameName = str(gameName).replace("\"","")
                 mycursor.execute("INSERT INTO `totalTimes` VALUES (NULL, "+str(row[0])+", NULL, "+str(row[1])+", 1)")
                 #print("..........Added new entry")
             else:
