@@ -11,6 +11,7 @@ nohup.out
 *.csv
 *.html
 *.htm
+*.log
 *temp/*.jpg
 modules/activity/temp
 *modules/activity/temp*
