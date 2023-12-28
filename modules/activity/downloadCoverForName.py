@@ -54,7 +54,7 @@ def downloadCoverFromUrl(name, coverUrl):
         with open(config["script_path"]+config["activity_path"]+"temp/"+name.replace(" ","")+".jpg", 'wb') as f:
             f.write(r.content)
         f.close()
-        print(coverUrl.replace("\n",""))
+        #print(coverUrl.replace("\n",""))
         return coverUrl
     else:
         #print("Correct URL was NOT FOUND for game name: "+name)
@@ -64,7 +64,7 @@ def downloadCoverFromUrl(name, coverUrl):
 
 def getCoverFromName(name):
     #get url from db
-    print("Retrieving Cover URL for Game Name: "+name+" from DATABASE")
+    #print("Retrieving Cover URL for Game Name: "+name+" from DATABASE")
     mycursor.execute("SELECT coverurl FROM `steamgames` WHERE `name`='"+name+"' AND `coverurl` IS NOT NULL AND `coverurl` != '' LIMIT 1;")
     coverresult = mycursor.fetchall()
     if len(coverresult) > 50:#If cover was found in DB
@@ -73,9 +73,9 @@ def getCoverFromName(name):
         downloadCoverFromUrl(name, coverUrl)
         return coverUrl
     else:#If cover was not found in DB
-        print("Cover URL for Game Name: "+name+" was NOT FOUND in the DATABASE. Trying to add cover URL to DB using command below:")
+        #print("Cover URL for Game Name: "+name+" was NOT FOUND in the DATABASE. Trying to add cover URL to DB using command below:")
         command = "python3 "+config["script_path"]+config["activity_path"]+"addCoverUrlToDB.py nameyear \""+name+"\""
-        print("[downloadCoverForName.py] [INFO] Add cover CMD: "+command+"         ")
+        #print("[downloadCoverForName.py] [INFO] Add cover CMD: "+command+"         ")
         os.system(command)
         mydb.reconnect(attempts=1, delay=1)
         mycursor.execute("SELECT coverurl FROM `steamgames` WHERE `name`='"+name+"' LIMIT 1;")
@@ -92,11 +92,11 @@ def getCoverFromName(name):
 
 if len(sys.argv) > 0:
     #print("1")
-    print(" SYSARGV1: "+sys.argv[1])
+    #print(" SYSARGV1: "+sys.argv[1])
     gameName = re.sub('[^A-Za-z0-9\.\-\(\) ]+', ' ', sys.argv[1])
-    print(" gameName1: "+gameName)
+    #print(" gameName1: "+gameName)
     gameName = re.sub('[^A-Za-z0-9\.\-\(\) ]+', ' ', gameName)
-    print(" gameName2: "+gameName+"     \n")
+    #print(" gameName2: "+gameName+"     \n")
     
     getCoverFromName(gameName)
 else:

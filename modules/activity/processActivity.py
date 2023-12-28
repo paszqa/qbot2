@@ -106,19 +106,19 @@ for line in content:
     #Add twitch activity do DB
     print("twitch: "+twitch+" // ", end='')
     if twitch != "null" and twitch != "NULL" and twitch != "":
-        mycursor.execute("SELECT `activityTime` FROM `activity` WHERE `type` = 'twitch' AND `activityName` = '"+twitch+"' AND `userId` = '"+userId+"' AND `date` = '"+yesterdaySql+"'");
+        mycursor.execute("SELECT `activityTime` FROM `activity` WHERE `type` = 'stream' AND `activityName` = '"+twitch+"' AND `userId` = '"+userId+"' AND `date` = '"+yesterdaySql+"'");
         results = mycursor.fetchall()
         if username == "Vyqe":
             print("Y", end='')
             print(results, end='')
         numberOfResults = len(results)
         if numberOfResults == 0:
-            mycursor.execute("INSERT INTO `activity` VALUES (NULL, '"+userId+"', '"+username+"', '"+yesterdaySql+"', 'twitch', '"+twitch+"', "+config["activity_schedule_cron_tick"]+")");
+            mycursor.execute("INSERT INTO `activity` VALUES (NULL, '"+userId+"', '"+username+"', '"+yesterdaySql+"', 'stream', '"+twitch+"', "+config["activity_schedule_cron_tick"]+")");
             #if username == "Vyqe":
             #    print("X", end='')
             #    print(mycursor.fetchall(), end='')
         else:
-            mycursor.execute("UPDATE `activity` SET `activityTime` = activityTime + "+config["activity_schedule_cron_tick"]+" WHERE `type` = 'twitch' AND `activityName` = '"+twitch+"' AND `userId` = '"+userId+"' AND `date` = '"+yesterdaySql+"'");
+            mycursor.execute("UPDATE `activity` SET `activityTime` = activityTime + "+config["activity_schedule_cron_tick"]+" WHERE `type` = 'stream' AND `activityName` = '"+twitch+"' AND `userId` = '"+userId+"' AND `date` = '"+yesterdaySql+"'");
             #mycursor.execute("SELECT `activityTime` FROM `activity` WHERE `type` = 'twitch' AND `activityName` = '"+twitch+"' AND `userId` = '"+userId+"' AND `date` = '"+yesterdaySql+"'");
             #print("Z", end='')
             #print(mycursor.fetchall(), end='')

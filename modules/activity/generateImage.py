@@ -204,14 +204,18 @@ for line in mostPlayedGames:
     gameTimeHours = str(round((float(gameTime) / 60),1))+"h"
     gameCoverUrl = line.split(";")[2]
     gameTitlePrepared = re.sub('[^A-Za-z0-9\-]+', '', gameTitle)
-    #print(gameTitlePrepared)
+    gameTitleWithSymbolsAsSpaces = re.sub('[^A-Za-z0-9\-]+', ' ', gameTitle)
+    gameTitleWithSymbolsAsSpaces = gameTitleWithSymbolsAsSpaces.replace("  "," ").replace("  "," ")
+    print("Game title: "+gameTitle)
+    print("Game title prepared: "+gameTitlePrepared)
+    print("Game title with symbols as spaces: "+gameTitleWithSymbolsAsSpaces)
     firstOffset = len(gameTimeHours) * lastWeekTextOffsetPerLetter # Offset according to length of hours text
     #secondOffset = len(gameTimeHours) * lastWeekTextOffsetPerLetter # Offset according to length of hours text
     coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
     #Paste game cover image if exists
     printCoverText = False
     if not exists(coverPath):
-        command = "python3 "+config["script_path"]+config["activity_path"]+"addCoverUrlToDB.py nameyear \""+gameTitle+"\""
+        command = "python3 "+config["script_path"]+config["activity_path"]+"addCoverUrlToDB.py nameyear \""+gameTitleWithSymbolsAsSpaces+"\""
         os.system(command)
         if not exists(coverPath):
             coverPath = config["script_path"]+config["activity_path"]+'resources/NoCover.png'

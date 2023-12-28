@@ -148,7 +148,7 @@ f.close()
 ##########################################################
 print(" ")    
 print("STREAMERS")
-mycursor.execute("SELECT  userId, username, SUM(`activityTime`) FROM `activity` WHERE `type`='twitch' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `userId` ORDER BY SUM(`activityTime`) DESC LIMIT 5;;")
+mycursor.execute("SELECT  userId, username, SUM(`activityTime`) FROM `activity` WHERE `type`='stream' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `userId` ORDER BY SUM(`activityTime`) DESC LIMIT 5;;")
 results = mycursor.fetchall()
 f = open(pathToScript+"/output/recent-streamers.csv","w+")
 for line in results:
