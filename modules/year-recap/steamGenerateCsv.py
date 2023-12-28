@@ -25,7 +25,7 @@ config = json.load(json_file)
 
 #Settings
 pathToScript = os.path.dirname(os.path.realpath(__file__))
-year = 2022
+year = 2023
 #Check if script isn't running already
 def FileCheck(fn):
     try:
