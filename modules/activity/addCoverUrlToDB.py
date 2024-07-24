@@ -72,7 +72,7 @@ def getCoverUrl(realName, year=0):
     ################################################################################
     ################################################################################
     #print("--------------start=====")
-    #print("received name: "+str(realName))
+    print("[addCoverUrlToDB] received real name: "+str(realName))
     clearName = re.sub('[^A-Za-z0-9\.\- ]+', ' ', realName)
     clearName = clearName.replace("UNITAF ","")
     clearName = clearName.replace("[UNITAF] ","")
@@ -81,7 +81,7 @@ def getCoverUrl(realName, year=0):
     else:
         bestName = getIgdbName(str(clearName))
     name = re.sub('[^A-Za-z0-9\.\- ]+', ' ', realName) #For compatibility with old code
-    #print("found bestName: "+bestName)
+    print("[addCoverUrlToDB] found bestName: "+bestName)
     escapedBestName = bestName.replace("'","\'").replace('"','\"').replace("\\","\\\\")
     command = "curl -s 'https://api.igdb.com/v4/games/' -d \"fields id; where name ~ \\\""+bestName+"\\\" | alternative_names.name ~ \\\""+bestName+"\\\""+yearFilter+"; limit 1;\" -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
     #print("Command I:")

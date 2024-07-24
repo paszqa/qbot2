@@ -14,6 +14,7 @@ import re
 import os
 from os.path import exists
 import json #JSON read/write capability
+import MySQLdb
 
 #Read JSON config
 if exists("../../config.json"):
@@ -43,6 +44,8 @@ mycursor = mydb.cursor()
 #print(sys.argv[1])
 mode = sys.argv[1]
 thingToCheck = sys.argv[2]
+print("[getGameData.py] ARG1: "+mode+ " // ARG2: "+thingToCheck)
+
 
 #####################################
 # Functions
@@ -51,20 +54,22 @@ thingToCheck = sys.argv[2]
 #Return coverurl
 def getCoverUrl(name):
     #Check for game's cover from IGDB
+    print("[getGameData.py] Running getCoverUrl function for name: "+name)
     command = "curl -s 'https://api.igdb.com/v4/games/' -d 'search \""+name.replace("\"","").replace(";","").replace("'","")+"\"; fields id; where category='0'; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-    #print(command)
+    print(command)
     gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     if gameid=="" or gameid == " " or gameid == "NULL" or gameid == "null":#If not found game id, search without where-category filter
         command = "curl -s 'https://api.igdb.com/v4/games/' -d 'search \""+name.replace("\"","").replace(";","").replace("'","")+"\"; fields id; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
         gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
     command = "curl -s 'https://api.igdb.com/v4/covers/' -d 'fields url; where game = "+str(gameid)+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] "    
-    #print("---")
-    #print(command)
+    print("---")
+    print(command)
     coverurl=str(subprocess.check_output(command, shell=True).decode( "utf-8" ).strip())
     if len(coverurl) > 3:
         coverurl = coverurl.split("\n")[1].replace("t_thumb","t_cover_small").replace("//","https://").replace("\"","")
     if "https" not in coverurl:
         coverurl = ""
+    print("Returning cover URL: "+coverurl)
     return coverurl
 
 
@@ -152,21 +157,32 @@ if mode == "getname":
 if mode == "addcover":
     numberOfResults = 0
     #Check if there is a DB entry with already existing coverurl
-    mycursor.execute("SELECT `name` FROM `steamgames` WHERE `name` = '"+thingToCheck+"' AND `coverurl` IS NOT NULL AND `coverurl` != ''")
+    query = "SELECT `name` FROM `steamgames` WHERE `name` = '"+thingToCheck+"'"
+    print("[getGameData.py] [addcover] Select command: "+query)
+    mycursor.execute(query)
     for row in mycursor.fetchall():
         numberOfResults += 1
+    print("[getGameData.py] numberOfResults:"+str(numberOfResults))
     if numberOfResults > 0:
         coverurl = getCoverUrl(thingToCheck)
         command = "UPDATE `steamgames` SET `coverurl` = '"+str(coverurl)+"' WHERE `name` = '"+str(thingToCheck)+"';"
+        print("[getGameData.py] [addcover] Update DB command: "+command)
         mycursor.execute(command)
         mycursor.execute("COMMIT;")
         print(coverurl)
     else:    #There are ZERO RESULTS for already existing coverurl for this game name
         coverurl = getCoverUrl(thingToCheck)
         #Check if there is a DB entry with EMPTY coverurl
-        mycursor.execute("SELECT `name` FROM `steamgames` WHERE `name` = '"+thingToCheck+"'")        
-        for row in mycursor.fetchall():
+        print("[getGameData.py] [addcover] No entry found to update")
+        mycursor.execute("SELECT `coverurl` FROM `steamgames` WHERE `name` = '"+thingToCheck+"'")
+        results = mycursor.fetchall();
+        for row in results:
             numberOfResults += 1
+        print("[getGameData.py] [addcover] numberOfResults B:"+str(numberOfResults))
+        if numberOfResults > 0:
+            if results[0][0] == "" or results[0][0]:
+                numberOfResults = 0
+                print("[getGameData.py] [addcover] resetting numberOfResults to 0")
         if numberOfResults > 0:
             #print("there is already a DB entry with empty coverurl for "+thingToCheck)
             #print("Trying to download a cover again")
@@ -177,11 +193,19 @@ if mode == "addcover":
             #print("hmm:"+coverurl)
         else:
             if coverurl != "" and coverurl != " " and coverurl != "NULL" and coverurl != "null":
-                #print("Adding cover entry for "+thingToCheck+" CoverURL: "+coverurl)
-                mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+thingToCheck+"', '"+str(coverurl)+"')")
+            
+                print("Adding cover entry for "+thingToCheck+" CoverURL: "+coverurl)
+                query = "INSERT INTO `steamgames` VALUES (NULL, NULL, %s, %s);"
+                data = (str(thingToCheck), str(coverurl))
+                #query = "INSERT INTO `steamgames` VALUES (NULL, NULL, '"+str(thingToCheck)+"', '"+MySQLdb.escape_string(coverurl)+"');"
+                print("[getGameData.py] [addcover] INSERT v1 QUERY: "+query)
+                #mycursor.execute(query)
+                mycursor.execute(query, data)
+                mydb.commit()
+                #connection.commit()
             else:
-                #print("Can't add cover entry for "+thingToCheck+" CoverURL: "+coverurl+" - adding null")
-                mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+thingToCheck+"', NULL)")
+                print("Can't add cover entry for "+thingToCheck+" CoverURL: "+coverurl+" - adding null")
+                mycursor.execute("INSERT INTO `steamgames` VALUES (NULL, NULL, '"+str(thingToCheck)+"', NULL)")
         mycursor.execute("COMMIT;")
         print(coverurl)
 ####################################

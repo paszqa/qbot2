@@ -23,10 +23,19 @@ from difflib import SequenceMatcher #Comparing strings
 from PIL import Image, ImageDraw, ImageFont, ImageFilter #Image generation
 from io import BytesIO #Downloading an image from URL
 import json #JSON read/write capability
+from os.path import exists
 
 
 #Read JSON config
-json_file = open("config.json")
+if exists("../../config.json"):
+    json_file = open("../../config.json")
+elif exists("config.json"):
+    json_file = open("config.json")
+elif exists("/home/pi/qbot2/config.json"):#Custom path, ex. for crontab purposes
+    json_file = open("/home/pi/qbot2/config.json")
+else:
+    print("No config.json found")
+    exit(2)
 config = json.load(json_file)
 
 #Basic vars
@@ -320,4 +329,6 @@ if printPrices(str(inputName), getElementFromSite(siteurl, "a", "class", "game-p
     newName = getSimilarName(str(inputName))[1]
     siteurl = buildSiteUrl(newName)
     printPrices(prettyName, getElementFromSite(siteurl, "a", "class", "game-price-anchor-link"), siteurl)
-generateImage(siteurl)
+
+if sys.argv[1] != "NOIMAGE":
+    generateImage(siteurl)

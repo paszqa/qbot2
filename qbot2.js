@@ -79,6 +79,9 @@ client.on("message", (message) => {
 		else if(cmd == "debugrecreate"){
 			recreateReactionsForAllVotingOptions();
 		}
+		else if(cmd == "recap2023"){
+			postRecap(config.year_recap_image_channel);
+		}
         //switch (cmd) {
             //case "qqbot":
                 //message.channel.send(config.qbot);
@@ -223,6 +226,19 @@ function showReleasesImageToChannel(toChannel, which){
 	client.channels.cache.get(""+toChannel).send("", { files: [config.releases_path+"/output/"+which+"-eng.png"]}); // Paste chosen image to channel in the parameter
 }
 
+///////////////////////////////////////////
+///////////////////////// GAMES LATEST UPDATE TRACKER
+///////////////////////////////////////////
+function showGlutImageToChannel(toChannel, which){
+	console.log(ReturnDate()+" [INFO] Sending GLUT ("+which+") to channel ID: "+toChannel+"...");
+	if(which == ""){
+		client.channels.cache.get(""+toChannel).send("", { files: [config.glut_path+"/output/listresult.png"]}); // Paste chosen image to channel in the parameter
+	}
+	else{
+		sanitized_which = which.toLowerCase().replace(/[^a-z]/g, '');;
+		client.channels.cache.get(""+toChannel).send("", { files: [config.glut_path+"/output/listresult-"+sanitized_which+".png"]}); // Paste chosen image to channel in the parameter
+	}
+}
 
 ///////////////////////////////////////////
 ////////////////////////// DISCORD ACTIVITY STUFF
@@ -339,6 +355,13 @@ function logTwitchActivity(){
 				
 			}
 	});
+}
+///////////////////////////////////////////
+/////////////////////////// PASTE RECAP IMAGE
+///////////////////////////////////////////
+function postRecap(channel){
+	console.log(ReturnDate()+" [INFO] Pasting activity image to channel: "+channel+"...");
+	client.channels.cache.get(channel).send("", { files: [config.script_path+config.year_recap_path+"output/2023/recap.png"]}); //pastes recap image
 }
 
 ///////////////////////////////////////////
@@ -555,15 +578,22 @@ function getVotePostsFromDatabase(){	//TODO:Function which gets all voteposts id
 function enableCronJobs(){
 	console.log(ReturnDate()+" [INFO] Enabling Cron Jobs");
 	// Every thursday at 17:00 and 30 seconds
-	/*
-	cron.schedule("00 00 17 * * 4", function(){
+	
+	cron.schedule("00 18 14 * * 4", function(){
 		console.log(ReturnDate()+" [INFO] Run schedule - show releases...");
 		// fresh releases
 		showReleasesImageToChannel("787465529984155658","new");//890640686947381258","new");
 		// upcoming releases
 		showReleasesImageToChannel("787465529984155658","month");//890640686947381258","month");
 	});
-	*/
+	
+	
+	cron.schedule("00 42 14 * * 4", function(){
+		console.log(ReturnDate()+" [INFO] Run schedule - show GLUT...");
+		// update tracker
+		showGlutImageToChannel("787465529984155658","");//890640686947381258","new");
+	});
+	
 	cron.schedule(config.activity_schedule_cron, function(){
 		console.log(ReturnDate()+" [INFO] Run schedule - log Discord activity");
 		logActivity();

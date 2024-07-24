@@ -99,7 +99,7 @@ def translate(sourcecsv,outputcsv):
                     dateFinal += "May"
                 elif "czer" in dateSplit[-2]:
                     dateFinal += "Jun"
-                elif "lipi" in dateSplit[-2]:
+                elif "lip" in dateSplit[-2]:
                     dateFinal += "Jul"
                 elif "sier" in dateSplit[-2]:
                     dateFinal += "Aug"
