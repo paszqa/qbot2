@@ -21,3 +21,4 @@ modules/activity/output
 modules/activity/output*
 modules/activity/output/*.png
 modules/activity/output/activity.png
+checkqbot.log
