@@ -56,10 +56,11 @@ def downloadCoverFromUrl(name, coverUrl):
 #Get cover function
 def getCoverFromName(name):
     #get url from db
-    #print("Getting cover for "+name)
+    print("Getting cover for "+name)
     mycursor.execute("SELECT coverurl FROM `steamgames` WHERE `name`='"+name+"' AND `coverurl` IS NOT NULL AND `coverurl` != '' LIMIT 1;")
     coverresult = mycursor.fetchall()
     if len(coverresult) > 0:#If cover was found in DB
+        print("Cover was found in DB.")
         coverUrl = str(coverresult[0][0]).replace("'b","").replace("\n'","").replace("\n","")
         #Downloading cover for game name
         command='python3 '+config["script_path"]+config["activity_path"]+'downloadCoverForName.py "'+str(name)+'"'
@@ -70,6 +71,7 @@ def getCoverFromName(name):
         #downloadCoverFromUrl(name, coverUrl)
         return coverUrl
     else:#If cover was not found in DB
+        print("Cover was NOT found in DB.")
         command = "python3 "+config["script_path"]+config["steam_sum_up_path"]+"getGameData.py addcover \""+name+"\""
         #print("2. CMD:    "+command)
         os.system(command)
@@ -93,12 +95,13 @@ def getCoverFromName(name):
 #Results - Top 5 games in last week with times
 ##########################################################
 print("GAMES")
-mycursor.execute("SELECT  activityName,SUM(`activityTime`) FROM `activity` WHERE `type`='game' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `activityName` ORDER BY SUM(`activityTime`) DESC LIMIT 10;")
+mycursor.execute("SELECT  activityName,SUM(`activityTime`) FROM `activity` WHERE `type`='game' AND `activityName` NOT LIKE '%Visual Studio%' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `activityName` ORDER BY SUM(`activityTime`) DESC LIMIT 10;")
 results = mycursor.fetchall()
 f = open(pathToScript+"/output/recent-games.csv","w+")
 for line in results:
     gameName = str(line[0])
     time = str(line[1])
+    print("Game name from CSV: "+gameName)
     cover = str(getCoverFromName(gameName))
     csvline = gameName+";"+time+";"+cover
     csvline = csvline.replace("\n","")
@@ -112,7 +115,7 @@ f.close()
 ##########################################################
 print(" ")    
 print("PLAYERS")
-mycursor.execute("SELECT  userId, username, SUM(`activityTime`) FROM `activity` WHERE `type`='game' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `userId` ORDER BY SUM(`activityTime`) DESC LIMIT 5;")
+mycursor.execute("SELECT  userId, username, SUM(`activityTime`) FROM `activity` WHERE `type`='game' AND `activityName` NOT LIKE '%Visual Studio%' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `userId` ORDER BY SUM(`activityTime`) DESC LIMIT 5;")
 results = mycursor.fetchall()
 f = open(pathToScript+"/output/recent-players.csv","w+")
 for line in results:
@@ -212,7 +215,9 @@ f.close()
 # Music minutes
 ##########################################################
 print("\nMUSIC ACTIVITY")
-mycursor.execute("SELECT  SUM(`activityTime`) FROM `activity` WHERE `type`='music' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `activityName` ORDER BY SUM(`activityTime`) DESC LIMIT 1;")
+musicquery="SELECT  SUM(`activityTime`) FROM `activity` WHERE `type`='music' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `activityName` ORDER BY SUM(`activityTime`) DESC LIMIT 1;"
+print(musicquery)
+mycursor.execute(musicquery)
 queryresults = mycursor.fetchall()[0][0]
 mycursor.execute("SELECT  SUM(`activityTime`) FROM `activity` WHERE `type`='music' AND `date` > (date_sub(now(),INTERVAL 1 WEEK)) GROUP BY `username` ORDER BY SUM(`activityTime`);")
 results = mycursor.fetchall()

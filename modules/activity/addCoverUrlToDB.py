@@ -73,33 +73,33 @@ def getCoverUrl(realName, year=0):
     ################################################################################
     #print("--------------start=====")
     print("[addCoverUrlToDB] received real name: "+str(realName))
-    clearName = re.sub('[^A-Za-z0-9\.\- ]+', ' ', realName)
+    clearName = re.sub('[^A-Za-z0-9\:\.\- ]+', ' ', realName)
     clearName = clearName.replace("UNITAF ","")
     clearName = clearName.replace("[UNITAF] ","")
     if clearName == realName:
         bestName = clearName
     else:
         bestName = getIgdbName(str(clearName))
-    name = re.sub('[^A-Za-z0-9\.\- ]+', ' ', realName) #For compatibility with old code
+    name = re.sub('[^A-Za-z0-9\:\.\- ]+', ' ', realName) #For compatibility with old code
     print("[addCoverUrlToDB] found bestName: "+bestName)
     escapedBestName = bestName.replace("'","\'").replace('"','\"').replace("\\","\\\\")
     command = "curl -s 'https://api.igdb.com/v4/games/' -d \"fields id; where name ~ \\\""+bestName+"\\\" | alternative_names.name ~ \\\""+bestName+"\\\""+yearFilter+"; limit 1;\" -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][]"
-    #print("Command I:")
-    #print(command)
+    print("Command I:")
+    print(command)
     gameid=subprocess.check_output(command, shell=True).decode( "utf-8" ).strip()
-    #print("Result I: "+gameid)
-    #print("------------PART-2=======")
+    print("Result I: "+gameid)
+    print("------------PART-2=======")
     command = "curl -s 'https://api.igdb.com/v4/covers/' -d 'fields url; where game = "+str(gameid)+"; limit 1;' -H 'Client-ID: "+config["igdb_api_client"]+"' -H 'Authorization: Bearer "+config["igdb_api_token"]+"' -H 'Accept: application/json' | jq .[][] "
-    #print("Command to get cover:")
-    #print(command)
+    print("Command to get cover:")
+    print(command)
     coverurl=str(subprocess.check_output(command, shell=True).decode( "utf-8" ).strip())
-    #print("\tCommand result: "+coverurl)
-    #print("=============END==========")
+    print("\tCommand result: "+coverurl)
+    print("=============END==========")
     if len(coverurl) > 3:
         coverurl = coverurl.split("\n")[1].replace("t_thumb","t_cover_small").replace("//","https://").replace("\"","")
     if "https" not in coverurl:
         coverurl = ""
-    #print("\tCOVER URL: "+coverurl)
+    print("\tCOVER URL: "+coverurl)
     
     #Now add this result to DATABASE
     numberOfResults = 0

@@ -306,11 +306,14 @@ for line in discordActivity:
     if playerImageUrl != "null" and playerImageUrl != "":
         #Download player image
         r = requests.get(playerImageUrl)  #Download player image from url
+        print("---------------------------> PLAYER IMAGE URL: "+playerImageUrl)
         playerImagePath = config["script_path"]+config["activity_path"]+"temp/playerImage.jpg" 
         #open player image or no avatar image
         with open(playerImagePath, 'wb') as f:
             f.write(r.content)
         f.close()
+        if os.path.getsize(playerImagePath) < 10:
+            playerImagePath = config["script_path"]+config["activity_path"]+"resources/noavatar.png"
     else:#If player image is null = no avatar
         playerImagePath = config["script_path"]+config["activity_path"]+"resources/noavatar.png"
     #Write player name
@@ -543,6 +546,7 @@ for line in sortedCsv:
         gameCoverUrl = row.split(";")[3]
         coverPath = config["script_path"]+config["activity_path"]+'temp/'+gameTitlePrepared+".jpg"
         command = "python3 "+config["script_path"]+config["activity_path"]+"downloadCoverForName.py \""+gameTitle+"\""
+        print("DOWNLOAD COVER COMMAND: "+command)
         os.system(command)
         if not exists(coverPath):
             coverPath = config["script_path"]+config["activity_path"]+'resources/NoCover.png'

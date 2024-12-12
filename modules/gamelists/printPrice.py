@@ -343,7 +343,8 @@ def getSimilarName(inputName):
 
 def buildSiteUrl(inputName):
     gameName=fixName(inputName)
-    siteurl='https://gg.deals/eu/region/switch/?return=%2Fgame%2F'+str(gameName)+'%2F&showKeyshops=1'
+    #siteurl='https://gg.deals/eu/region/switch/?return=%2Fgame%2F'+str(gameName)+'%2F&showKeyshops=1'
+    siteurl='https://gg.deals/game/'+gameName+'/?region=eu&showKeyshops=1'
     return siteurl
 
 def fixName(inputName):
