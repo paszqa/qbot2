@@ -29,44 +29,73 @@ pathToScript = os.path.dirname(os.path.realpath(__file__))
 #
 ###########################################################
 
+def extract_release_rows(html_content):
+    soup = BeautifulSoup(html_content, 'html.parser')
+    rows = []
+
+    release_boxes = soup.select("a.box, div.box, li.box")
+    for box in release_boxes:
+        date = ""
+        name = ""
+        genre = ""
+
+        genre_tag = box.find("i")
+        if genre_tag:
+            genre = genre_tag.get_text(" ", strip=True)
+
+        for date_tag in box.find_all(["div", "span", "time"]):
+            date_candidate = date_tag.get_text(" ", strip=True)
+            if date_candidate:
+                date = date_candidate
+                break
+
+        for name_tag in box.find_all(["p", "h1", "h2", "h3", "h4", "strong"]):
+            name_candidate = name_tag.get_text(" ", strip=True)
+            if name_candidate and name_candidate != date and name_candidate != genre:
+                name = name_candidate
+                break
+
+        if not name:
+            name = box.get_text(" ", strip=True)
+            if date:
+                name = name.replace(date, "", 1).strip()
+            if genre:
+                name = name.replace(genre, "", 1).strip()
+
+        if name and genre:
+            rows.append((date, name, genre))
+
+    if rows:
+        return rows
+
+    for release in soup.find_all(class_=re.compile(r"daty-premier", re.IGNORECASE)):
+        text = release.get_text(" ", strip=True)
+        if text:
+            chunks = [chunk.strip() for chunk in text.split("  ") if chunk.strip()]
+            if len(chunks) >= 3:
+                rows.append((chunks[0], chunks[1], chunks[2]))
+    return rows
+
 def saveCSV(siteurl,htmlname,csvname):
     ##Download website
     #url =  'https://www.gry-online.pl/daty-premier-gier.asp?PLA=1'
+    os.makedirs(os.path.dirname(htmlname), exist_ok=True)
+    os.makedirs(os.path.dirname(csvname), exist_ok=True)
     r = requests.get(siteurl, allow_redirects=True)
     open(htmlname, 'wb').write(r.content)
 
 
     #Change data to csv
-    html = open(htmlname, encoding="utf8", errors='ignore')
-    soup = BeautifulSoup(html, 'html.parser')
-    credits = soup.find_all("div", {"class" : "daty-premier-2017"})
-    credits = re.sub(r'<a class="box"(.*)">\n', '', str(credits))
-    credits = re.sub(r'<div>','', str(credits))
-    credits = re.sub(r' <i>',';',credits)
-    credits = re.sub(r'</i>','',credits)
-    credits = re.sub(r'<div data-cnt(.*)">','', str(credits))
-    credits = re.sub(r'</div>\n',';', str(credits))
-    credits = re.sub(r';</a>','', credits)
-    credits = re.sub(r'<div class="clr">;</div>]','',credits)
-    credits = re.sub(r'\[<div class="daty-premier-2017">\n','', credits)
-    credits = re.sub(r'<span(.*)</span>\n','', credits)
-    credits = re.sub(r'\n</a>\n','',credits)
-    credits = re.sub(r'\n</p>\n','',credits)
-    credits = re.sub(r'</p>','',credits)
-    credits = re.sub(r'<p (.*)>','',credits)
-    credits = re.sub(r'\t','',credits)
-    credits = re.sub(r'&amp;','&',credits) #fix ampersand
-    print (credits)
+    with open(htmlname, encoding="utf8", errors='ignore') as html_file:
+        html = html_file.read()
+    releases = extract_release_rows(html)
+    release_lines = "\n".join([f"{date};{name};{genre};;" for date, name, genre in releases])
+    print(release_lines)
 
-    csv = open(csvname,'w')
-    csv.write("Date;Name;Genre;Platform;Other\n")
-    csv.write(credits)
-    csv.close()
-
-
-saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1',pathToScript+'/temp/new.html',pathToScript+'/output/new.csv')
-saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=2',pathToScript+'/temp/month.html',pathToScript+'/output/month.csv')
-saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=3',pathToScript+'/temp/6m.html',pathToScript+'/output/6m.csv')
+    with open(csvname,'w') as csv:
+        csv.write("Date;Name;Genre;Platform;Other\n")
+        if release_lines:
+            csv.write(release_lines + "\n")
 
 ##############################################################
 #
@@ -75,8 +104,7 @@ saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=3',pathToScri
 ##############################################################
 
 def translate(sourcecsv,outputcsv):
-    f = open(outputcsv,'w')
-    with open(sourcecsv) as file:
+    with open(outputcsv,'w') as f, open(sourcecsv) as file:
         array = file.readlines()
         for line in array[0:40]:
             lineSplit = line.split(';')
@@ -146,9 +174,15 @@ def translate(sourcecsv,outputcsv):
             f.write(dateFinal+";"+lineSplit[1]+";"+genre+"\n")
             print(dateFinal+";"+lineSplit[1]+";"+genre)
     print("=================================================")
-    f.close()
-translate(pathToScript+'/output/new.csv',pathToScript+'/output/new-eng.csv')
-translate(pathToScript+'/output/month.csv',pathToScript+'/output/month-eng.csv')
-translate(pathToScript+'/output/6m.csv',pathToScript+'/output/6m-eng.csv')
+def main():
+    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1',pathToScript+'/temp/new.html',pathToScript+'/output/new.csv')
+    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=2',pathToScript+'/temp/month.html',pathToScript+'/output/month.csv')
+    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=3',pathToScript+'/temp/6m.html',pathToScript+'/output/6m.csv')
+
+    translate(pathToScript+'/output/new.csv',pathToScript+'/output/new-eng.csv')
+    translate(pathToScript+'/output/month.csv',pathToScript+'/output/month-eng.csv')
+    translate(pathToScript+'/output/6m.csv',pathToScript+'/output/6m-eng.csv')
 
 
+if __name__ == "__main__":
+    main()
