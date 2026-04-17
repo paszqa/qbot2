@@ -104,8 +104,7 @@ def saveCSV(siteurl,htmlname,csvname):
 ##############################################################
 
 def translate(sourcecsv,outputcsv):
-    f = open(outputcsv,'w')
-    with open(sourcecsv) as file:
+    with open(outputcsv,'w') as f, open(sourcecsv) as file:
         array = file.readlines()
         for line in array[0:40]:
             lineSplit = line.split(';')
@@ -175,7 +174,6 @@ def translate(sourcecsv,outputcsv):
             f.write(dateFinal+";"+lineSplit[1]+";"+genre+"\n")
             print(dateFinal+";"+lineSplit[1]+";"+genre)
     print("=================================================")
-    f.close()
 def main():
     saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1',pathToScript+'/temp/new.html',pathToScript+'/output/new.csv')
     saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=2',pathToScript+'/temp/month.html',pathToScript+'/output/month.csv')
