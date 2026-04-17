@@ -14,6 +14,7 @@
 #   - 6m-eng.csv - releases within the next 6 months, genres in english
 #
 #   v1.0.0      2022-03-22      Paszq       first version, based on standalone script
+#   v1.1.0      2026-04-16      Paszq       fixes accounting for new source page layout
 #
 #####################################
 from bs4 import BeautifulSoup
