@@ -33,47 +33,24 @@ def extract_release_rows(html_content):
     soup = BeautifulSoup(html_content, 'html.parser')
     rows = []
 
-    release_boxes = soup.select("a.box, div.box, li.box")
-    for box in release_boxes:
-        date = ""
-        name = ""
-        genre = ""
+    for time_box in soup.select("div.enc-rel-time-box"):
+        h2 = time_box.find("h2")
+        date = h2.get_text(strip=True) if h2 else ""
 
-        genre_tag = box.find("i")
-        if genre_tag:
-            genre = genre_tag.get_text(" ", strip=True)
+        for game_box in time_box.select("div.enc-rel-box-c"):
+            h3 = game_box.find("h3")
+            name = h3.get_text(strip=True) if h3 else ""
 
-        for date_tag in box.find_all(["div", "span", "time"]):
-            date_candidate = date_tag.get_text(" ", strip=True)
-            if date_candidate:
-                date = date_candidate
-                break
+            genre = ""
+            p = game_box.find("p")
+            if p:
+                b = p.find("b")
+                if b:
+                    genre = b.get_text(strip=True)
 
-        for name_tag in box.find_all(["p", "h1", "h2", "h3", "h4", "strong"]):
-            name_candidate = name_tag.get_text(" ", strip=True)
-            if name_candidate and name_candidate != date and name_candidate != genre:
-                name = name_candidate
-                break
+            if name and genre:
+                rows.append((date, name, genre))
 
-        if not name:
-            name = box.get_text(" ", strip=True)
-            if date:
-                name = name.replace(date, "", 1).strip()
-            if genre:
-                name = name.replace(genre, "", 1).strip()
-
-        if name and genre:
-            rows.append((date, name, genre))
-
-    if rows:
-        return rows
-
-    for release in soup.find_all(class_=re.compile(r"daty-premier", re.IGNORECASE)):
-        text = release.get_text(" ", strip=True)
-        if text:
-            chunks = [chunk.strip() for chunk in text.split("  ") if chunk.strip()]
-            if len(chunks) >= 3:
-                rows.append((chunks[0], chunks[1], chunks[2]))
     return rows
 
 def saveCSV(siteurl,htmlname,csvname):
@@ -112,12 +89,11 @@ def translate(sourcecsv,outputcsv):
             dateSplit = lineSplit[0].split(' ')
             dateFinal = ""
             if len(dateSplit) > 1:
-                if len(dateSplit) > 2:
-                    dateFinal += dateSplit[0] + " ";
-
+                if len(dateSplit) > 2 and "kwarta" not in dateSplit[-2]:
+                    dateFinal += dateSplit[0] + " "
                 if "sty" in dateSplit[-2]:
                     dateFinal += "Jan"
-                elif "lut" in dateSplit[-2]:
+                elif "lut" in dateSplit[-2] or "ebru" in dateSplit[-2]:
                     dateFinal += "Feb"
                 elif "mar" in dateSplit[-2]:
                     dateFinal += "Mar"
@@ -139,6 +115,15 @@ def translate(sourcecsv,outputcsv):
                     dateFinal += "Nov"
                 elif "grud" in dateSplit[-2]:
                     dateFinal += "Dec"
+                elif "kwarta" in dateSplit[-2]:
+                    if dateSplit[0] == "I":
+                        dateFinal += "Q1"
+                    elif dateSplit[0] == "II":
+                        dateFinal += "Q2"
+                    elif dateSplit[0] == "III":
+                        dateFinal += "Q3"
+                    elif dateSplit[0] == "IV":
+                        dateFinal += "Q4"
                 dateFinal += " "+dateSplit[-1]
             else:
                 dateFinal = dateSplit[-1]
@@ -175,9 +160,9 @@ def translate(sourcecsv,outputcsv):
             print(dateFinal+";"+lineSplit[1]+";"+genre)
     print("=================================================")
 def main():
-    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1',pathToScript+'/temp/new.html',pathToScript+'/output/new.csv')
-    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=2',pathToScript+'/temp/month.html',pathToScript+'/output/month.csv')
-    saveCSV('https://www.gry-online.pl/daty-premier-gier.asp?PLA=1&CZA=3',pathToScript+'/temp/6m.html',pathToScript+'/output/6m.csv')
+    saveCSV('https://www.gry-online.pl/gry/daty-premier/pc/ostatnie-30-dni/',pathToScript+'/temp/new.html',pathToScript+'/output/new.csv')
+    saveCSV('https://www.gry-online.pl/gry/daty-premier/pc/',pathToScript+'/temp/month.html',pathToScript+'/output/month.csv')
+    saveCSV('https://www.gry-online.pl/gry/daty-premier/pc/obecny-rok/',pathToScript+'/temp/6m.html',pathToScript+'/output/6m.csv')
 
     translate(pathToScript+'/output/new.csv',pathToScript+'/output/new-eng.csv')
     translate(pathToScript+'/output/month.csv',pathToScript+'/output/month-eng.csv')
