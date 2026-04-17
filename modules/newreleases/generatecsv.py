@@ -86,16 +86,16 @@ def saveCSV(siteurl,htmlname,csvname):
 
 
     #Change data to csv
-    html = open(htmlname, encoding="utf8", errors='ignore').read()
+    with open(htmlname, encoding="utf8", errors='ignore') as html_file:
+        html = html_file.read()
     releases = extract_release_rows(html)
-    credits = "\n".join([f"{date};{name};{genre};;" for date, name, genre in releases])
-    print(credits)
+    release_lines = "\n".join([f"{date};{name};{genre};;" for date, name, genre in releases])
+    print(release_lines)
 
-    csv = open(csvname,'w')
-    csv.write("Date;Name;Genre;Platform;Other\n")
-    if credits:
-        csv.write(credits + "\n")
-    csv.close()
+    with open(csvname,'w') as csv:
+        csv.write("Date;Name;Genre;Platform;Other\n")
+        if release_lines:
+            csv.write(release_lines + "\n")
 
 ##############################################################
 #
